@@ -15,6 +15,7 @@ class ChainStepKind(StrEnum):
     RAG_RETRIEVE = "rag_retrieve"
     MEMORY_WRITE = "memory_write"
     MEMORY_READ = "memory_read"
+    TOOL_RESPONSE = "tool_response"
     ISSUE_CAPABILITY = "issue_capability"
     PROPOSE_TOOL = "propose_tool"
 
@@ -27,6 +28,7 @@ class AttackChainStep(BaseModel):
     key: str | None = None
     content: str | None = None
     trusted: bool = False
+    response_tool: str | None = None
     tool: ToolCall | None = None
     capability: CapabilityGrantSpec | None = None
     capability_ref: str | None = None
@@ -57,6 +59,8 @@ class ChainResult(BaseModel):
     capability_denials: int
     capability_replay_attempts: int
     capability_scope_attempts: int
+    tool_output_violation: bool = False
+    tool_output_denials: int = 0
     completed_steps: int
     total_steps: int
     output: str
