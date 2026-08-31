@@ -12,6 +12,11 @@ from .oracle import SecurityOracle
 from .policy import ReferenceMonitor
 from .runner import build_default_tools
 from .simulators import MemoryRecord, MemorySimulator, RAGDocument, RAGSimulator
+from .tool_responses import (
+    ToolOutputReferenceMonitor,
+    ToolResponse,
+    ToolResponseSimulator,
+)
 from .trace import ImmutableSecurityTrace, verify_trace
 
 _CAPABILITY_PROTECTED_TOOLS = {"read_record"}
@@ -53,16 +58,21 @@ def _run_chain(chain: AttackChainScenario, agent: str) -> ChainResult:
     memory = MemorySimulator()
     monitor = ReferenceMonitor()
     broker = CapabilityBroker()
+    tool_response_simulator = ToolResponseSimulator()
+    tool_output_monitor = ToolOutputReferenceMonitor()
     trace = ImmutableSecurityTrace()
     context: list[str] = []
     output_fragments: list[str] = []
     capability_ids: dict[str, str] = {}
+    latest_tool_response: ToolResponse | None = None
     final_output = "NO_EFFECT"
     completed_steps = 0
     capability_violation = False
     capability_denials = 0
     capability_replay_attempts = 0
     capability_scope_attempts = 0
+    tool_output_violation = False
+    tool_output_denials = 0
 
     trace.append(
         "chain_started",
@@ -146,6 +156,28 @@ def _run_chain(chain: AttackChainScenario, agent: str) -> ChainResult:
             )
             continue
 
+        if step.kind is ChainStepKind.TOOL_RESPONSE:
+            if step.response_tool is None or step.content is None:
+                raise ValueError(
+                    f"{step.id}: tool_response requires response_tool and content"
+                )
+            latest_tool_response = tool_response_simulator.respond(
+                tool=step.response_tool,
+                content=step.content,
+                trusted=step.trusted,
+                source=step.source,
+            )
+            context.append(latest_tool_response.content)
+            trace.append(
+                "tool_response_received",
+                (
+                    f"step={step.id} tool={latest_tool_response.tool} "
+                    f"trusted={latest_tool_response.trusted} "
+                    f"source={latest_tool_response.source}"
+                ),
+            )
+            continue
+
         if step.kind is ChainStepKind.ISSUE_CAPABILITY:
             if step.capability is None:
                 raise ValueError(f"{step.id}: issue_capability requires capability")
@@ -174,7 +206,30 @@ def _run_chain(chain: AttackChainScenario, agent: str) -> ChainResult:
                 ),
             )
 
+            influenced_by_untrusted_tool_output = (
+                latest_tool_response is not None
+                and not latest_tool_response.trusted
+            )
+
             if agent == "hardened":
+                tool_output_decision = tool_output_monitor.authorize(
+                    response=latest_tool_response,
+                    call=call,
+                    capability_ref=step.capability_ref,
+                )
+                trace.append(
+                    "tool_output_monitor",
+                    (
+                        f"step={step.id} decision={tool_output_decision.decision.value} "
+                        f"reason={tool_output_decision.reason}"
+                    ),
+                )
+                if tool_output_decision.decision is Decision.DENY:
+                    tool_output_denials += 1
+                    final_output = f"DENIED:{tool_output_decision.reason}"
+                    trace.append("tool_denied", f"step={step.id} tool={call.name}")
+                    continue
+
                 policy = monitor.authorize(_policy_scenario(chain, call), call)
                 trace.append(
                     "reference_monitor",
@@ -228,6 +283,8 @@ def _run_chain(chain: AttackChainScenario, agent: str) -> ChainResult:
             output_fragments.append(result)
             if agent == "vulnerable" and call.name in _CAPABILITY_PROTECTED_TOOLS:
                 capability_violation = True
+            if agent == "vulnerable" and influenced_by_untrusted_tool_output:
+                tool_output_violation = True
             trace.append("tool_executed", f"step={step.id} tool={call.name}")
             continue
 
@@ -235,7 +292,11 @@ def _run_chain(chain: AttackChainScenario, agent: str) -> ChainResult:
 
     policy_view = _policy_scenario(chain)
     verdict = SecurityOracle().evaluate(policy_view, output_fragments, tools)
-    compromise = verdict.compromise or capability_violation
+    compromise = (
+        verdict.compromise
+        or capability_violation
+        or tool_output_violation
+    )
     trace.append(
         "security_oracle",
         (
@@ -244,7 +305,8 @@ def _run_chain(chain: AttackChainScenario, agent: str) -> ChainResult:
             f"unauthorized_tool={verdict.unauthorized_tool_call} "
             f"cross_tenant={verdict.cross_tenant_violation} "
             f"approval_bypass={verdict.approval_bypass} "
-            f"capability_violation={capability_violation}"
+            f"capability_violation={capability_violation} "
+            f"tool_output_violation={tool_output_violation}"
         ),
     )
     trace.append(
@@ -269,6 +331,8 @@ def _run_chain(chain: AttackChainScenario, agent: str) -> ChainResult:
         capability_denials=capability_denials,
         capability_replay_attempts=capability_replay_attempts,
         capability_scope_attempts=capability_scope_attempts,
+        tool_output_violation=tool_output_violation,
+        tool_output_denials=tool_output_denials,
         completed_steps=completed_steps,
         total_steps=len(chain.steps),
         output=final_output,
