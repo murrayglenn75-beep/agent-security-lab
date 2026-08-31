@@ -1,0 +1,40 @@
+name: Stateful Security Regression
+
+on:
+  push:
+    branches: ["main", "v1.1-stateful-evaluation"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  stateful-security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install project
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install pytest ruff mypy types-PyYAML
+
+      - name: Unit and regression tests
+        run: pytest
+
+      - name: Ruff
+        run: ruff check .
+
+      - name: Mypy
+        run: mypy src
+
+      - name: Stateful security thresholds
+        run: python scripts/check_chain_thresholds.py

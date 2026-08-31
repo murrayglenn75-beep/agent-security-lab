@@ -159,5 +159,31 @@ def suite(directory: Path = Path("scenarios")) -> None:
     console.print(f"Suite HTML: {html_path}")
 
 
+
+@app.command("chain-suite")
+def chain_suite_command(
+    chains_dir: str = "chains",
+    reports_dir: str = "reports",
+) -> None:
+    from pathlib import Path as _Path
+
+    from .chain_suite import run_chain_suite, write_chain_suite_reports
+
+    run = run_chain_suite(_Path(chains_dir))
+    paths = write_chain_suite_reports(run, _Path(reports_dir))
+    summary = run.summary
+
+    typer.echo(
+        f"Chains: {summary.total_chains} | "
+        f"Vulnerable ASR: {summary.vulnerable_attack_success_rate:.2f}% | "
+        f"Hardened ASR: {summary.hardened_attack_success_rate:.2f}% | "
+        f"Containment: {summary.hardened_containment_rate:.2f}% | "
+        f"Trace valid: {summary.trace_valid_rate:.2f}%"
+    )
+    typer.echo(f"JSON: {paths.summary_json}")
+    typer.echo(f"JSONL: {paths.trace_jsonl}")
+    typer.echo(f"HTML: {paths.html_report}")
+
+
 if __name__ == "__main__":
     app()

@@ -148,3 +148,17 @@ Planned extensions include:
 ## Limitations
 
 The current v1.0 corpus is small and deterministic. A 0% hardened attack-success rate on these scenarios means the included regression controls held under those test conditions. It does not prove that the design is unbreakable, production-ready, or resistant to every prompt-injection or agentic attack.
+
+## v1.1 Stateful Adversarial Evaluation
+
+The v1.1 development branch adds multi-stage RAG and memory poisoning, scoped capability authorization, replay/expiry/subject/resource enforcement, SHA-256 hash-chained security traces, an independent security oracle, aggregate chain metrics, JSONL trace export, and CI security thresholds.
+
+Run the full stateful benchmark:
+
+```bash
+asl chain-suite
+```
+
+The expanded repository contains 44 deterministic attack-chain cases plus the six v1.0 single-stage scenarios. These are synthetic regression cases, not a universal security guarantee.
+
+See `docs/STATEFUL_ATTACK_CHAINS.md` and `docs/V1_1_VALIDATION.md`.
