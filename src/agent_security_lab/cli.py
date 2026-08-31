@@ -7,6 +7,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from .chain import run_attack_chain
 from .reporting import write_html_report
 from .runner import run_comparison
 from .scenario import load_scenario
@@ -59,6 +60,50 @@ def run(path: Path) -> None:
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     console.print(f"\nReport: {report_path}")
+
+
+@app.command()
+def chain(path: Path) -> None:
+    """Run one stateful multi-stage adversarial attack chain."""
+    comparison = run_attack_chain(path)
+
+    table = Table(title=f"Agent Security Lab Chain - {comparison.scenario.id}")
+    table.add_column("Agent")
+    table.add_column("Compromise")
+    table.add_column("Contained")
+    table.add_column("Secret leak")
+    table.add_column("Unauthorized tool")
+    table.add_column("Approval bypass")
+    table.add_column("Trace valid")
+
+    for result in (comparison.vulnerable, comparison.hardened):
+        table.add_row(
+            result.agent,
+            str(result.compromise),
+            str(result.contained),
+            str(result.secret_leaked),
+            str(result.unauthorized_tool_call),
+            str(result.approval_bypass),
+            str(result.trace_valid),
+        )
+
+    console.print(table)
+    console.print("\nHardened immutable trace")
+    for event in comparison.hardened.trace:
+        console.print(
+            f"[{event.index:02}] "
+            f"{event.event}: {event.detail}"
+        )
+
+    payload = {
+        "scenario": comparison.scenario.model_dump(mode="json"),
+        "vulnerable": comparison.vulnerable.model_dump(mode="json"),
+        "hardened": comparison.hardened.model_dump(mode="json"),
+    }
+    report_path = Path("reports") / f"{comparison.scenario.id}-chain.json"
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    console.print(f"\nChain report: {report_path}")
 
 
 @app.command()
