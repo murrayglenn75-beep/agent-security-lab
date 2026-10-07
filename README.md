@@ -1,5 +1,14 @@
 # Agent Security Lab
 
+## 30-second overview
+
+**Agent Security Lab is a defensive test bench for AI agents.** It deliberately puts vulnerable and hardened agent designs through the same hostile scenarios to show whether prompt injection, poisoned context, or manipulated model behavior can turn into unauthorized tool use or data exposure.
+
+**What I built:** a deterministic red-team harness, external authorization/reference monitor, instrumented tool simulator, independent evaluator, security metrics, and JSON/HTML reporting.
+
+**Why it matters:** the project tests a simple security principle — an AI model can be wrong or compromised without automatically gaining permission to cause real effects.
+
+
 **Adversarial Security Evaluation for AI Agents**
 
 Agent Security Lab (ASL) is a deterministic, reproducible red-team lab for testing whether an AI agent can turn hostile or manipulated model behavior into unauthorized effects.
