@@ -24,8 +24,8 @@ class StubResponse:
 
 
 def request(**changes):
-    data = dict(request_id="r", prompt="hello", model="test-model", max_tokens=32,
-                timeout_ms=1000, max_cost_usd=0.1)
+    data = {"request_id": "r", "prompt": "hello", "model": "test-model", "max_tokens": 32,
+            "timeout_ms": 1000, "max_cost_usd": 0.1}
     data.update(changes)
     return Request(**data)
 
