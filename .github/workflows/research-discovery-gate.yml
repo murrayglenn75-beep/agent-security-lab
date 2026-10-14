@@ -1,0 +1,17 @@
+name: Research Discovery Gate Tests
+on:
+  pull_request:
+  push:
+    branches: [feature/discovery-verification-gate-20261013]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s experimental/discovery_gate -p 'test_*.py' -v
