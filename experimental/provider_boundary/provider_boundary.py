@@ -2,6 +2,7 @@
 from collections.abc import Callable
 from dataclasses import dataclass
 
+
 class ProviderError(Exception):
     def __init__(self, code, retryable=False):
         self.code=code
