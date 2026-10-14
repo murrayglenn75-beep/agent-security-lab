@@ -52,9 +52,9 @@ def assess(claim):
         if not isinstance(e, Evidence) or not e.source or not e.method or not SHA256.fullmatch(e.sha256):
             reasons.append("invalid_artifact")
             break
-    if claim.state in {"reproduced", "independently_checked"}:
-        if not any(e.kind == "reproduction" for e in claim.artifacts):
-            reasons.append("missing_reproduction")
+    if (claim.state in {"reproduced", "independently_checked"} and
+            not any(e.kind == "reproduction" for e in claim.artifacts)):
+        reasons.append("missing_reproduction")
     if claim.state == "independently_checked":
         if not claim.independent_checker or claim.independent_checker == claim.generated_by:
             reasons.append("missing_independent_checker")
