@@ -2,6 +2,7 @@ import unittest
 
 from experimental.rag_eval.evaluate import Case, evaluate
 
+
 class TestRagEvaluation(unittest.TestCase):
     def test_perfect(self):
         d=evaluate([Case("q",("a",),("a","b"),("a",),2,2)])
