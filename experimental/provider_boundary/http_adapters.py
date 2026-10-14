@@ -5,7 +5,8 @@ No tools, streaming, environment credential discovery, or automatic retries.
 import json
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
-from urllib.request import HTTPRedirectHandler, Request as HttpRequest, build_opener
+from urllib.request import HTTPRedirectHandler, build_opener
+from urllib.request import Request as HttpRequest
 
 from provider_boundary import Provider, ProviderError, Response
 
