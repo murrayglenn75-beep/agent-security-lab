@@ -1,5 +1,6 @@
 """Label-based RAG retrieval metrics; not an automatic truth oracle."""
 from __future__ import annotations
+
 import math
 from dataclasses import dataclass
 
