@@ -1,5 +1,4 @@
 import unittest
-from dataclasses import replace
 
 from discovery_gate import Claim, Evidence, assess, digest_bytes
 
