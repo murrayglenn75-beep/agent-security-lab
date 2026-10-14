@@ -3,11 +3,10 @@
 No tools, streaming, environment credential discovery, or automatic retries.
 """
 import json
-import socket
 from urllib.error import HTTPError, URLError
 from urllib.request import Request as HttpRequest
-from urllib.request import urlopen
 from urllib.parse import urlsplit
+from urllib.request import urlopen
 
 from provider_boundary import Provider, ProviderError, Response
 
@@ -66,7 +65,7 @@ def openai_compatible(name, endpoint, model, max_tokens, data_classes,
         except HTTPError as error:
             # Never treat uncertain transport outcomes as safely retryable.
             raise ProviderError("HTTP_" + str(error.code), retryable=False) from None
-        except (URLError, TimeoutError, socket.timeout) as error:
+        except (URLError, TimeoutError) as error:
             raise ProviderError("TRANSPORT_UNCERTAIN", retryable=False) from error
         except (KeyError, IndexError, TypeError, ValueError, json.JSONDecodeError) as error:
             raise ProviderError("INVALID_PROVIDER_RESPONSE", retryable=False) from error
