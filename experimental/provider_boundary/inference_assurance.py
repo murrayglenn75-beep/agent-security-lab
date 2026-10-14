@@ -54,7 +54,8 @@ def benchmark_report(samples, *, cold_start_seconds=None, idle_cost_usd=0.0,
                                            or not isfinite(cold_start_seconds)
                                            or cold_start_seconds < 0):
         raise ValueError("invalid cold start")
-    if attempts is not None and (type(attempts) is not int or attempts < len(samples)):
+    if attempts is not None and (type(attempts) is not int or
+                                 attempts < len(samples) or successful_tasks > attempts):
         raise ValueError("invalid attempt count")
     if cache_hits is not None and (type(cache_hits) is not int or
                                     cache_hits < 0 or attempts is None or
