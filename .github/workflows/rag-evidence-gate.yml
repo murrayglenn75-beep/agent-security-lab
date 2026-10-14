@@ -1,0 +1,12 @@
+name: RAG evidence evaluation gate
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  evaluation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python -m unittest discover -s experimental/rag_eval -p 'test_*.py' -v
