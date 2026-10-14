@@ -1,6 +1,6 @@
 """Side-effect-free, provider-neutral inference contract prototype. No network calls."""
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 class ProviderError(Exception):
     def __init__(self, code, retryable=False):
