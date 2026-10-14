@@ -5,15 +5,21 @@ No tools, streaming, environment credential discovery, or automatic retries.
 import json
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
+from urllib.request import HTTPRedirectHandler, build_opener
 from urllib.request import Request as HttpRequest
-from urllib.request import urlopen
 
 from provider_boundary import Provider, ProviderError, Response
 
 
+class NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, request, fp, code, msg, headers, newurl):
+        return None
+
+
 def openai_compatible(name, endpoint, model, max_tokens, data_classes,
                       api_key=None, usd_per_million_input=0.0,
-                      usd_per_million_output=0.0, local=False):
+                      usd_per_million_output=0.0, local=False, allowed_hosts=None,
+                      input_token_upper_bound=None):
     url = urlsplit(endpoint)
     if url.username or url.password or url.fragment or url.query:
         raise ValueError("endpoint cannot embed credentials or query")
@@ -24,13 +30,28 @@ def openai_compatible(name, endpoint, model, max_tokens, data_classes,
             raise ValueError("local adapter does not accept a cloud key")
     elif url.scheme != "https" or not api_key:
         raise ValueError("cloud adapter requires HTTPS and explicit API key")
+    if not local:
+        if (not isinstance(allowed_hosts, (frozenset, set, tuple, list))
+                or not allowed_hosts or url.hostname not in allowed_hosts):
+            raise ValueError("cloud endpoint must match an explicit trusted hostname allowlist")
+        if (not isinstance(input_token_upper_bound, int)
+                or isinstance(input_token_upper_bound, bool)
+                or input_token_upper_bound < 1):
+            raise ValueError("cloud call requires trusted input token upper bound")
     if not endpoint.endswith("/chat/completions"):
         raise ValueError("expected explicit chat/completions endpoint")
     if any(not isinstance(v, (int, float)) or v < 0 for v in
            (usd_per_million_input, usd_per_million_output)):
         raise ValueError("invalid price configuration")
 
+    opener = build_opener(NoRedirect())
+
     def call(request):
+        if not local:
+            upper_cost = (input_token_upper_bound * usd_per_million_input +
+                          request.max_tokens * usd_per_million_output) / 1_000_000
+            if upper_cost > request.max_cost_usd:
+                raise ProviderError("PRECALL_BUDGET_EXCEEDED")
         payload = json.dumps({
             "model": model, "messages": [{"role": "user", "content": request.prompt}],
             "max_tokens": request.max_tokens, "stream": False
@@ -39,7 +60,7 @@ def openai_compatible(name, endpoint, model, max_tokens, data_classes,
         if api_key is not None:
             headers["Authorization"] = "Bearer " + api_key
         try:
-            response = urlopen(
+            response = opener.open(
                 HttpRequest(endpoint, data=payload, headers=headers, method="POST"),
                 timeout=request.timeout_ms / 1000,
             )

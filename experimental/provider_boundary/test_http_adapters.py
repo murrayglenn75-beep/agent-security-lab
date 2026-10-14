@@ -38,21 +38,22 @@ class AdapterTests(unittest.TestCase):
     def cloud(self):
         return openai_compatible("cloud", "https://example.com/v1/chat/completions",
                                  "test-model", 64, {"public"}, api_key="fixture-key",
-                                 usd_per_million_input=1.0, usd_per_million_output=2.0)
+                                 usd_per_million_input=1.0, usd_per_million_output=2.0,
+                                 allowed_hosts={"example.com"}, input_token_upper_bound=1000)
 
-    @patch("http_adapters.urlopen")
+    @patch("http_adapters.build_opener")
     def test_local_round_trip(self, mock):
-        mock.return_value = StubResponse({"choices": [{"message": {"content": "ok"}}],
+        mock.return_value.open.return_value = StubResponse({"choices": [{"message": {"content": "ok"}}],
                                           "usage": {"prompt_tokens": 4, "completion_tokens": 2}})
         response, _ = invoke(request(), [self.local()], {"allowed_providers": {"local"}})
         self.assertEqual(response.text, "ok")
-        body = json.loads(mock.call_args.args[0].data)
+        body = json.loads(mock.return_value.open.call_args.args[0].data)
         self.assertFalse(body["stream"])
         self.assertNotIn("tools", body)
 
-    @patch("http_adapters.urlopen")
+    @patch("http_adapters.build_opener")
     def test_cloud_cost(self, mock):
-        mock.return_value = StubResponse({"choices": [{"message": {"content": "ok"}}],
+        mock.return_value.open.return_value = StubResponse({"choices": [{"message": {"content": "ok"}}],
                                           "usage": {"prompt_tokens": 3, "completion_tokens": 5}})
         response, _ = invoke(request(), [self.cloud()], {"allowed_providers": {"cloud"}})
         self.assertEqual(response.cost_usd, 0.000013)
@@ -67,17 +68,17 @@ class AdapterTests(unittest.TestCase):
             openai_compatible("cloud", "http://example.com/v1/chat/completions",
                               "test-model", 32, {"public"}, api_key="x")
 
-    @patch("http_adapters.urlopen")
+    @patch("http_adapters.build_opener")
     def test_invalid_response_no_fallback(self, mock):
-        mock.return_value = StubResponse({"choices": []})
+        mock.return_value.open.return_value = StubResponse({"choices": []})
         with self.assertRaises(ProviderError):
             invoke(request(allow_fallback=True), [self.local(), self.cloud()],
                    {"allowed_providers": {"cloud", "local"}})
-        self.assertEqual(mock.call_count, 1)
+        self.assertEqual(mock.return_value.open.call_count, 1)
 
-    @patch("http_adapters.urlopen")
+    @patch("http_adapters.build_opener")
     def test_cost_ceiling_is_checked(self, mock):
-        mock.return_value = StubResponse({"choices": [{"message": {"content": "ok"}}],
+        mock.return_value.open.return_value = StubResponse({"choices": [{"message": {"content": "ok"}}],
                                           "usage": {"prompt_tokens": 1000000, "completion_tokens": 5}})
         with self.assertRaises(ValueError):
             invoke(request(), [self.cloud()], {"allowed_providers": {"cloud"}})
@@ -85,7 +86,20 @@ class AdapterTests(unittest.TestCase):
     def test_cloud_secrets_not_from_environment(self):
         with self.assertRaises(ValueError):
             openai_compatible("cloud", "https://example.com/v1/chat/completions",
-                              "test-model", 32, {"public"})
+                              "test-model", 32, {"public"}, allowed_hosts={"example.com"})
+
+    def test_cloud_host_denied(self):
+        with self.assertRaises(ValueError):
+            openai_compatible("cloud", "https://evil.example/v1/chat/completions",
+                              "test-model", 32, {"public"}, api_key="fixture",
+                              allowed_hosts={"example.com"}, input_token_upper_bound=100)
+
+    @patch("http_adapters.build_opener")
+    def test_budget_denied_before_network(self, mock):
+        provider = self.cloud()
+        with self.assertRaises(ProviderError):
+            provider.invoke(request(max_cost_usd=0.000001))
+        self.assertEqual(mock.return_value.open.call_count, 0)
 
     def test_private_not_routed_to_public_adapter(self):
         with self.assertRaises(ProviderError):
