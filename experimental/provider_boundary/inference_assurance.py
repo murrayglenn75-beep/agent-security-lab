@@ -13,7 +13,7 @@ class Capacity:
 
 def preflight(input_tokens, requested_output_tokens, capacity):
     if not isinstance(capacity, Capacity):
-        raise ValueError("missing capacity")
+        raise TypeError("missing capacity")
     for value in (input_tokens, requested_output_tokens, capacity.context_tokens,
                   capacity.max_output_tokens):
         if type(value) is not int or value < 1:
@@ -33,7 +33,7 @@ def readiness(generate_probe, expected="READY"):
     """
     try:
         return generate_probe() == expected
-    except Exception:
+    except (TimeoutError, ConnectionError, OSError, ValueError):
         return False
 
 
