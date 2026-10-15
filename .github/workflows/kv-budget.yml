@@ -1,0 +1,12 @@
+name: KV-cache budget verification
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  kv-budget:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python -m unittest discover -s experimental/kv_budget -p 'test_*.py' -v
