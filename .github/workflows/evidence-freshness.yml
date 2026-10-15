@@ -1,0 +1,12 @@
+name: Evidence freshness gate
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python -m unittest discover -s experimental/evidence_freshness -p 'test_*.py' -v
