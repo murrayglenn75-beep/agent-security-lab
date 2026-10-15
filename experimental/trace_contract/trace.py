@@ -52,7 +52,7 @@ def validate(span: Span) -> None:
 
 def validate_dict(payload: dict) -> Span:
     if not isinstance(payload, dict):
-        raise ValueError("expected trace metadata object")
+        raise TypeError("expected trace metadata object")
     fields = set(Span.__dataclass_fields__)
     if set(payload) - fields or any(any(bad in k.lower() for bad in DENIED) for k in payload):
         raise ValueError("unknown or potentially sensitive trace field")
