@@ -62,7 +62,7 @@ def assess(c: Candidate, *, max_changed: int = 3, min_gain: float = 0.02,
             reasons.append("insufficient_heldout_gain")
     if type(c.baseline_tokens) is not int or type(c.candidate_tokens) is not int or c.baseline_tokens<=0 or c.candidate_tokens<=0:
         reasons.append("invalid_cost")
-    elif "invalid_evaluation" not in reasons and "unpaired_evaluation" not in reasons:
-        if gain - 2*sem - token_penalty*max(0,(c.candidate_tokens-c.baseline_tokens)/c.baseline_tokens) <= max(min_gain,noise_floor):
-            reasons.append("cost_adjusted_gain")
+    elif ("invalid_evaluation" not in reasons and "unpaired_evaluation" not in reasons
+          and gain - 2*sem - token_penalty*max(0,(c.candidate_tokens-c.baseline_tokens)/c.baseline_tokens) <= max(min_gain,noise_floor)):
+        reasons.append("cost_adjusted_gain")
     return Verdict(not reasons,tuple(dict.fromkeys(reasons)))
