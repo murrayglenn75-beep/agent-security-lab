@@ -10,16 +10,16 @@ class TraceContractTests(unittest.TestCase):
         validate_trace(spans)
 
     def test_rejects_raw_prompt_and_secret_keys(self):
-        base = dict(trace_id="t", span_id="s", parent_id=None, stage="generation",
-                    start_ms=0, end_ms=10, outcome="ok")
+        base = {"trace_id": "t", "span_id": "s", "parent_id": None, "stage": "generation",
+                "start_ms": 0, "end_ms": 10, "outcome": "ok"}
         with self.assertRaises(ValueError):
             validate_dict({**base, "raw_prompt": "private"})
         with self.assertRaises(ValueError):
             validate_dict({**base, "api_key": "secret"})
 
     def test_unknown_and_negative_cost(self):
-        base = dict(trace_id="t", span_id="s", parent_id=None, stage="generation",
-                    start_ms=0, end_ms=10, outcome="ok")
+        base = {"trace_id": "t", "span_id": "s", "parent_id": None, "stage": "generation",
+                "start_ms": 0, "end_ms": 10, "outcome": "ok"}
         with self.assertRaises(ValueError):
             validate_dict({**base, "estimated_cost_usd": -1.0})
         with self.assertRaises(ValueError):
@@ -34,9 +34,9 @@ class TraceContractTests(unittest.TestCase):
             validate_trace([root, root])
 
     def test_estimate_and_billed_cost_distinct(self):
-        s = validate_dict(dict(trace_id="t", span_id="s", parent_id=None,
-             stage="generation", start_ms=0, end_ms=4, outcome="ok",
-             estimated_cost_usd=0.1))
+        s = validate_dict({"trace_id": "t", "span_id": "s", "parent_id": None,
+                           "stage": "generation", "start_ms": 0, "end_ms": 4, "outcome": "ok",
+                           "estimated_cost_usd": 0.1})
         self.assertIsNone(s.billed_cost_usd)
 
 
