@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 
 from experimental.adaptive_context.gate import ContextRequest, choose
 from experimental.rag_eval.evaluate import Case, evaluate
