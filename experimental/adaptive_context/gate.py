@@ -1,6 +1,7 @@
 """Fail-closed advisory RAG/CAG selection based on trusted metadata."""
 from dataclasses import dataclass
 
+
 @dataclass(frozen=True)
 class ContextRequest:
     workspace: str
