@@ -1,0 +1,12 @@
+name: Harness improvement assurance gate
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python -m unittest discover -s experimental/rrsi_gate -p 'test_*.py' -v
