@@ -1,6 +1,7 @@
 """Analytical KV-cache capacity model; not an actual inference benchmark."""
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 
@@ -20,7 +21,7 @@ def estimate_bytes(c: KVConfiguration) -> int:
         c.layers, c.kv_heads, c.head_dim, c.context_tokens, c.concurrent_sequences
     )):
         raise ValueError("positive integer shape required")
-    if any(type(v) not in (int, float) or v <= 0 or v != v or v == float("inf")
+    if any(type(v) not in (int, float) or v <= 0 or not math.isfinite(v)
            for v in (c.key_bytes, c.value_bytes)):
         raise ValueError("finite positive KV precision required")
     return int(c.layers * c.kv_heads * c.head_dim * c.context_tokens
