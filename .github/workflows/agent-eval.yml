@@ -1,0 +1,18 @@
+name: Agent evaluation reproducibility
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  agent-eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python -m unittest discover -s experimental/agent_eval -p 'test_*.py' -v
+      - run: python -m experimental.agent_eval.benchmark > agent-eval.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: agent-eval-fixture-report
+          path: agent-eval.json
+          retention-days: 14
