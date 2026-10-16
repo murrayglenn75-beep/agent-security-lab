@@ -1,4 +1,5 @@
 """Conservative architectural KV-cache estimate and RAM budget check."""
+
 from dataclasses import dataclass
 
 @dataclass(frozen=True)
