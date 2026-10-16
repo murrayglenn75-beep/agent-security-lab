@@ -1,0 +1,12 @@
+name: KV-cache analytical budget tests
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cache-budget:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python -m unittest discover -s experimental/kv_cache -p 'test_*.py' -v
