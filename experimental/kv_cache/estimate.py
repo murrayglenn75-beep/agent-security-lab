@@ -1,5 +1,6 @@
 """Analytical KV-cache budget estimator, not measured inference performance."""
 from __future__ import annotations
+
 from dataclasses import dataclass
 
 @dataclass(frozen=True)
