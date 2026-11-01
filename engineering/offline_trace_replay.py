@@ -4,6 +4,7 @@ No tool calls, network requests, code execution, or external effects.
 """
 from dataclasses import dataclass
 
+
 @dataclass(frozen=True)
 class TraceStep:
     event_id: str
