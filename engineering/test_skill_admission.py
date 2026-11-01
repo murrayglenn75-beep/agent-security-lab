@@ -1,6 +1,8 @@
 import hashlib
 import unittest
-from engineering.skill_admission import inspect_skill, approval_fingerprint
+
+from engineering.skill_admission import approval_fingerprint, inspect_skill
+
 BODY=b"sample skill"
 def record():
     return {"name":"debugging","source":"https://github.com/example/repo","revision":"a"*40,"sha256":hashlib.sha256(BODY).hexdigest(),"permissions":["read_workspace"],"approval_id":"ok"}
