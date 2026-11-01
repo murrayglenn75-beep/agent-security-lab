@@ -1,6 +1,7 @@
 """Fail-closed skill manifest admission; does not execute or install skills."""
 import hashlib
 import re
+
 SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 REV = re.compile(r"[0-9a-f]{40}\Z")
 PERMISSIONS = frozenset(("read_workspace","write_workspace","network","execute_tests"))
