@@ -5,6 +5,7 @@ An independent execution broker must enforce the policy for real effects.
 """
 from dataclasses import dataclass
 
+
 @dataclass(frozen=True)
 class ChannelRequest:
     actor: str
