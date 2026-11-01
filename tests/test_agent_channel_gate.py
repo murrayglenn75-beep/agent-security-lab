@@ -1,5 +1,7 @@
 import unittest
-from agent_channel_gate import ChannelRequest, ScopedGrant, authorize
+
+from engineering.agent_channel_gate import ChannelRequest, ScopedGrant, authorize
+
 
 class ChannelGateTests(unittest.TestCase):
     def setUp(self):
