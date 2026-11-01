@@ -1,8 +1,8 @@
 """Pure skill admission checks; never loads or executes skill scripts."""
+import re
 from dataclasses import dataclass
 from hashlib import sha256
 from hmac import compare_digest
-import re
 
 _DIGEST = re.compile(r"[0-9a-f]{64}\Z")
 
